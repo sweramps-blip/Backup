@@ -85,82 +85,63 @@ body::before { content: ''; position: fixed; top: -40%; left: 50%; transform: tr
   </div>
 </div>
 <script>
-    const GAS_URL = "https://script.google.com/macros/s/AKfycbwCbuJwoen6Q0pTnLbkXOdNjWRlwpYw42PZB_NQkHqjmsQPrRo_0VOD-aeGt1rtG7YY/exec";
-    
-    // 1. ڈیوائس آئی ڈی جنریٹ کرنا (ایک بار بنتی ہے اور لوکل اسٹوریج میں محفوظ رہتی ہے)
+    const GAS_URL = "آپ کا_ایپس_اسکرپٹ_یو_آر_ایل_یہاں_پیسٹ_کریں";
+
     function getDeviceId() {
         let id = localStorage.getItem('ps_device_token');
         if (!id) {
-            // اگر پہلی بار ہے تو نئی یونیک آئی ڈی بنائیں
             id = 'dev-' + Math.random().toString(36).substr(2, 9) + Date.now();
             localStorage.setItem('ps_device_token', id);
         }
         return id;
     }
 
-    // 2. رجسٹریشن فنکشن (سخت پالیسی کے ساتھ)
+    // رجسٹریشن
     async function doRegister() {
         const name = document.getElementById("r-name").value.trim();
         const num = document.getElementById("r-num").value.trim();
         const pass = document.getElementById("r-pass").value.trim();
         const ref = document.getElementById("r-ref").value.trim() || "DIRECT";
-        const deviceId = getDeviceId(); // رجسٹریشن کے وقت ڈیوائس آئی ڈی لینا
+        const deviceId = getDeviceId();
 
-        if(!name || !num || !pass) return Swal.fire("Error", "Fill all fields", "error");
+        if(!name || !num || !pass) return Swal.fire("Error", "Sare khane pur karen", "error");
 
-        Swal.fire({ title: 'Creating Account...', didOpen: () => Swal.showLoading() });
+        Swal.fire({ title: 'Account Ban raha hy...', didOpen: () => Swal.showLoading() });
 
         try {
-            // سرور کو ڈیٹا بھیجنا بشمول Device ID
-            let response = await fetch(GAS_URL, {
+            let res = await fetch(GAS_URL, {
                 method: "POST",
-                body: JSON.stringify({
-                    type: "register",
-                    name: name,
-                    number: num,
-                    password: pass,
-                    referral: ref,
-                    device_id: deviceId
-                })
+                body: JSON.stringify({ type: "register", name, number: num, password: pass, referral: ref, device_id: deviceId })
             });
-            let res = await response.json();
-
-            if(res.status === "success") {
-                Swal.fire("Success", "Account Created! ID: " + res.user_id, "success");
-                // یہاں آپ یوزر کو لاگ ان پیج پر بھیج سکتے ہیں
+            let out = await res.json();
+            if(out.status === "success") {
+                Swal.fire("Mubarak!", "Account ban gaya! ID: " + out.user_id, "success");
             } else {
-                // یہاں "Ek mobile par ek account" والا میسج شو ہوگا
-                Swal.fire("Registration Failed", res.message, "error");
+                Swal.fire("Ruken!", out.message, "error");
             }
-        } catch(e) {
-            Swal.fire("Error", "Connection error", "error");
-        }
+        } catch(e) { Swal.fire("Error", "Server ka masla hy", "error"); }
     }
 
-    // 3. لاگ ان فنکشن (سخت پالیسی کے ساتھ)
-    async function onLogin() {
-        const id = document.getElementById("loginID").value.trim();
-        const deviceId = getDeviceId(); // لاگ ان کے وقت دوبارہ وہی آئی ڈی چیک کرنا
+    // لاگ ان
+    async function doLogin() {
+        const num = document.getElementById("l-num").value.trim();
+        const pass = document.getElementById("l-pass").value.trim();
+        const deviceId = getDeviceId();
 
-        if(!id) return Swal.fire("Error", "Please enter your ID", "error");
+        if(!num || !pass) return Swal.fire("Error", "Number aur Password dalen", "error");
 
-        Swal.fire({ title: 'Verifying Device...', didOpen: () => Swal.showLoading() });
+        Swal.fire({ title: 'Checking...', didOpen: () => Swal.showLoading() });
 
         try {
-            let r = await fetch(`${GAS_URL}?checkID=${id}&deviceId=${deviceId}&v=${Date.now()}`);
-            let res = await r.json();
-
-            if(res.status === "Approved") {
-                localStorage.setItem("psID", id);
-                u.id = id;
-                syncUser(); 
+            let res = await fetch(`${GAS_URL}?type=login&num=${num}&pass=${pass}&deviceId=${deviceId}`);
+            let out = await res.json();
+            if(out.status === "success") {
+                localStorage.setItem("psID", out.user.user_id);
+                window.location.href = "dashboard.html";
             } else {
-                // اگر ڈیوائس میچ نہ ہوئی تو یہاں ایرر آئے گا
-                Swal.fire("Access Denied", res.message, "error");
+                Swal.fire("Ghalti!", out.message, "error");
             }
-        } catch(e) {
-            Swal.fire("Error", "Server connection failed", "error");
-        }
+        } catch(e) { Swal.fire("Error", "Server connect nahi ho raha", "error"); }
     }
 </script>
 </body>
