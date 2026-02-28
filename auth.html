@@ -84,13 +84,23 @@ body::before { content: ''; position: fixed; top: -40%; left: 50%; transform: tr
     <div class="device-row">ID: <span class="did-value" id="did-text">######</span></div>
   </div>
 </div>
+                    
 <script>
+    // آپ کا نیا ڈیپلائے کردہ لنک
     const GAS_URL = "https://script.google.com/macros/s/AKfycbwgcfUDa9wbPLrP9UZyn6qjMdmVMQXOSy6uU1Nwgk9Xttas_XMQ3XxkxcPfeYjZ2k8FVg/exec";
 
-    // صفحہ لوڈ ہوتے ہی ڈیوائس آئی ڈی دکھائیں
     window.onload = () => {
+        // ڈیوائس آئی ڈی سیٹ کرنا
         const did = getDeviceId();
         document.getElementById('did-text').innerText = did.substring(0, 10) + "...";
+
+        // URL سے ریفرل کوڈ اٹھانا (اگر ہو)
+        const urlParams = new URLSearchParams(window.location.search);
+        const refCode = urlParams.get('ref');
+        if (refCode) {
+            document.getElementById('r-ref').value = refCode;
+            switchTab('register'); // ریفرل ہونے پر رجسٹریشن پیج دکھائیں
+        }
     };
 
     function getDeviceId() {
@@ -102,7 +112,6 @@ body::before { content: ''; position: fixed; top: -40%; left: 50%; transform: tr
         return id;
     }
 
-    // ٹیب سوئچ کرنے کا فنکشن
     function switchTab(type) {
         document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
         document.querySelectorAll('.form-panel').forEach(p => p.classList.remove('active'));
@@ -110,20 +119,17 @@ body::before { content: ''; position: fixed; top: -40%; left: 50%; transform: tr
         document.getElementById('panel-' + type).classList.add('active');
     }
 
-    // پاس ورڈ دکھانے/چھپانے کا فنکشن
     function toggleEye(id, btn) {
         const inp = document.getElementById(id);
         const icon = btn.querySelector('i');
         if(inp.type === "password") {
-            inp.type = "text";
-            icon.className = "fas fa-eye-slash";
+            inp.type = "text"; icon.className = "fas fa-eye-slash";
         } else {
-            inp.type = "password";
-            icon.className = "fas fa-eye";
+            inp.type = "password"; icon.className = "fas fa-eye";
         }
     }
 
-    // رجسٹریشن
+    // رجسٹریشن + آٹو لاگ ان + انگلش الرٹس
     async function doRegister() {
         const name = document.getElementById("r-name").value.trim();
         const num = document.getElementById("r-num").value.trim();
@@ -131,9 +137,9 @@ body::before { content: ''; position: fixed; top: -40%; left: 50%; transform: tr
         const ref = document.getElementById("r-ref").value.trim() || "DIRECT";
         const deviceId = getDeviceId();
 
-        if(!name || !num || !pass) return Swal.fire("Error", "Sare khane pur karen", "error");
+        if(!name || !num || !pass) return Swal.fire("Error", "Please fill all required fields", "error");
 
-        Swal.fire({ title: 'Account Ban raha hy...', didOpen: () => Swal.showLoading() });
+        Swal.fire({ title: 'Processing Registration...', didOpen: () => Swal.showLoading() });
 
         try {
             let res = await fetch(GAS_URL, {
@@ -141,23 +147,41 @@ body::before { content: ''; position: fixed; top: -40%; left: 50%; transform: tr
                 body: JSON.stringify({ type: "register", name, number: num, password: pass, referral: ref, device_id: deviceId })
             });
             let out = await res.json();
+            
             if(out.status === "success") {
-                Swal.fire("Mubarak!", "Account ban gaya! ID: " + out.user_id, "success");
+                // کامیابی کا میسج
+                Swal.fire({
+                    title: "Registration Successful!",
+                    text: "Your Account ID is: " + out.user_id + ". Redirecting to dashboard...",
+                    icon: "success",
+                    timer: 2500,
+                    showConfirmButton: false
+                });
+                
+                // ڈیٹا محفوظ کریں تاکہ دوبارہ لاگ ان نہ کرنا پڑے
+                localStorage.setItem("psID", out.user_id);
+                localStorage.setItem("psUser", JSON.stringify({ user_id: out.user_id, name: name, number: num }));
+
+                // 2.5 سیکنڈ بعد ڈیش بورڈ پر روانگی
+                setTimeout(() => { window.location.href = "dashboard.html"; }, 2500);
+                
             } else {
-                Swal.fire("Ruken!", out.message, "error");
+                Swal.fire("Registration Failed", out.message, "error");
             }
-        } catch(e) { Swal.fire("Error", "Server ka masla hy", "error"); }
+        } catch(e) { 
+            Swal.fire("Network Error", "Unable to connect to server. Please try again.", "error"); 
+        }
     }
 
-    // لاگ ان
+    // لاگ ان + انگلش الرٹس
     async function doLogin() {
         const num = document.getElementById("l-num").value.trim();
         const pass = document.getElementById("l-pass").value.trim();
         const deviceId = getDeviceId();
 
-        if(!num || !pass) return Swal.fire("Error", "Number aur Password dalen", "error");
+        if(!num || !pass) return Swal.fire("Error", "Please enter your phone and password", "error");
 
-        Swal.fire({ title: 'Checking...', didOpen: () => Swal.showLoading() });
+        Swal.fire({ title: 'Verifying...', didOpen: () => Swal.showLoading() });
 
         try {
             let res = await fetch(`${GAS_URL}?type=login&num=${num}&pass=${pass}&deviceId=${deviceId}`);
@@ -167,11 +191,12 @@ body::before { content: ''; position: fixed; top: -40%; left: 50%; transform: tr
                 localStorage.setItem("psUser", JSON.stringify(out.user));
                 window.location.href = "dashboard.html";
             } else {
-                Swal.fire("Ghalti!", out.message, "error");
+                Swal.fire("Access Denied", out.message, "error");
             }
-        } catch(e) { Swal.fire("Error", "Server connect nahi ho raha", "error"); }
+        } catch(e) { 
+            Swal.fire("Server Error", "Authentication service is currently unavailable.", "error"); 
+        }
     }
-                                             </script>
-
+</script>
 </body>
 </html>
