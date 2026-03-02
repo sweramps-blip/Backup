@@ -8,7 +8,6 @@
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <style>
-/* آپ کا اصل ڈیزائن - 100% وہی */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 html, body { height: 100%; font-family: 'Outfit', sans-serif; background: #0a0e1a; color: #fff; -webkit-font-smoothing: antialiased; overflow-x: hidden; }
 body::before { content: ''; position: fixed; top: -40%; left: 50%; transform: translateX(-50%); width: 600px; height: 600px; background: radial-gradient(circle, rgba(251,191,36,0.12) 0%, transparent 70%); pointer-events: none; z-index: 0; }
@@ -55,7 +54,6 @@ body::before { content: ''; position: fixed; top: -40%; left: 50%; transform: tr
     <h1>Power Star</h1>
     <p>Secure Authentication</p>
   </div>
-
   <div class="card">
     <div class="tab-bar">
       <button class="tab-btn active" id="tab-login" onclick="switchTab('login')">Login</button>
@@ -84,118 +82,155 @@ body::before { content: ''; position: fixed; top: -40%; left: 50%; transform: tr
     <div class="device-row">ID: <span class="did-value" id="did-text">######</span></div>
   </div>
 </div>
-                    
+
 <script>
-    // آپ کا نیا ڈیپلائے کردہ لنک
-    const GAS_URL = "https://script.google.com/macros/s/AKfycbzUtZtwaUZ_LgSpmQdbzrukqB-TvphKDsp1uQqzD1wsHgTF5KGJ92wZgXhP1iYEc5lH1g/exec"
-    window.onload = () => {
-        // ڈیوائس آئی ڈی سیٹ کرنا
-        const did = getDeviceId();
-        document.getElementById('did-text').innerText = did.substring(0, 10) + "...";
+  const GAS_URL = "https://script.google.com/macros/s/AKfycbzUtZtwaUZ_LgSpmQdbzrukqB-TvphKDsp1uQqzD1wsHgTF5KGJ92wZgXhP1iYEc5lH1g/exec";
 
-        // URL سے ریفرل کوڈ اٹھانا (اگر ہو)
-        const urlParams = new URLSearchParams(window.location.search);
-        const refCode = urlParams.get('ref');
-        if (refCode) {
-            document.getElementById('r-ref').value = refCode;
-            switchTab('register'); // ریفرل ہونے پر رجسٹریشن پیج دکھائیں
-        }
-    };
-
-    function getDeviceId() {
-        let id = localStorage.getItem('ps_device_token');
-        if (!id) {
-            id = 'dev-' + Math.random().toString(36).substr(2, 9) + Date.now();
-            localStorage.setItem('ps_device_token', id);
-        }
-        return id;
+  window.onload = () => {
+    // ✅ اگر پہلے سے لاگ ان ہے تو سیدھا dashboard بھیجو
+    if (localStorage.getItem("psLoggedIn") === "true" && localStorage.getItem("psID")) {
+      window.location.replace("dashboard.html");
+      return;
     }
 
-    function switchTab(type) {
-        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-        document.querySelectorAll('.form-panel').forEach(p => p.classList.remove('active'));
-        document.getElementById('tab-' + type).classList.add('active');
-        document.getElementById('panel-' + type).classList.add('active');
+    const did = getDeviceId();
+    document.getElementById('did-text').innerText = did.substring(0, 10) + "...";
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const refCode = urlParams.get('ref');
+    if (refCode) {
+      document.getElementById('r-ref').value = refCode;
+      switchTab('register');
     }
+  };
 
-    function toggleEye(id, btn) {
-        const inp = document.getElementById(id);
-        const icon = btn.querySelector('i');
-        if(inp.type === "password") {
-            inp.type = "text"; icon.className = "fas fa-eye-slash";
-        } else {
-            inp.type = "password"; icon.className = "fas fa-eye";
-        }
+  function getDeviceId() {
+    let id = localStorage.getItem('ps_device_token');
+    if (!id) {
+      id = 'dev-' + Math.random().toString(36).substr(2, 9) + Date.now();
+      localStorage.setItem('ps_device_token', id);
     }
+    return id;
+  }
 
-    // رجسٹریشن + آٹو لاگ ان + انگلش الرٹس
-    async function doRegister() {
-        const name = document.getElementById("r-name").value.trim();
-        const num = document.getElementById("r-num").value.trim();
-        const pass = document.getElementById("r-pass").value.trim();
-        const ref = document.getElementById("r-ref").value.trim() || "DIRECT";
-        const deviceId = getDeviceId();
+  function switchTab(type) {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.form-panel').forEach(p => p.classList.remove('active'));
+    document.getElementById('tab-' + type).classList.add('active');
+    document.getElementById('panel-' + type).classList.add('active');
+  }
 
-        if(!name || !num || !pass) return Swal.fire("Error", "Please fill all required fields", "error");
+  function toggleEye(id, btn) {
+    const inp = document.getElementById(id);
+    const icon = btn.querySelector('i');
+    if (inp.type === "password") { inp.type = "text"; icon.className = "fas fa-eye-slash"; }
+    else { inp.type = "password"; icon.className = "fas fa-eye"; }
+  }
 
-        Swal.fire({ title: 'Processing Registration...', didOpen: () => Swal.showLoading() });
-
-        try {
-            let res = await fetch(GAS_URL, {
-                method: "POST",
-                body: JSON.stringify({ type: "register", name, number: num, password: pass, referral: ref, device_id: deviceId })
-            });
-            let out = await res.json();
-            
-            if(out.status === "success") {
-                // کامیابی کا میسج
-                Swal.fire({
-                    title: "Registration Successful!",
-                    text: "Your Account ID is: " + out.user_id + ". Redirecting to dashboard...",
-                    icon: "success",
-                    timer: 2500,
-                    showConfirmButton: false
-                });
-                
-                // ڈیٹا محفوظ کریں تاکہ دوبارہ لاگ ان نہ کرنا پڑے
-                localStorage.setItem("psID", out.user_id);
-                localStorage.setItem("psUser", JSON.stringify({ user_id: out.user_id, name: name, number: num }));
-
-                // 2.5 سیکنڈ بعد ڈیش بورڈ پر روانگی
-                setTimeout(() => { window.location.href = "dashboard.html"; }, 2500);
-                
-            } else {
-                Swal.fire("Registration Failed", out.message, "error");
-            }
-        } catch(e) { 
-            Swal.fire("Network Error", "Unable to connect to server. Please try again.", "error"); 
-        }
+  function checkStrength() {
+    const val  = document.getElementById("r-pass").value;
+    const segs = [document.getElementById("seg1"), document.getElementById("seg2"), document.getElementById("seg3")];
+    const lbl  = document.getElementById("strength-label");
+    segs.forEach(s => s.className = "strength-seg");
+    if (val.length === 0) { lbl.textContent = ""; return; }
+    if (val.length < 5) {
+      segs[0].classList.add("on-weak");
+      lbl.textContent = "Weak"; lbl.style.color = "#ef4444";
+    } else if (val.length < 8) {
+      segs[0].classList.add("on-medium"); segs[1].classList.add("on-medium");
+      lbl.textContent = "Medium"; lbl.style.color = "#f97316";
+    } else {
+      segs.forEach(s => s.classList.add("on-strong"));
+      lbl.textContent = "Strong"; lbl.style.color = "#22c55e";
     }
+  }
 
-    // لاگ ان + انگلش الرٹس
-    async function doLogin() {
-        const num = document.getElementById("l-num").value.trim();
-        const pass = document.getElementById("l-pass").value.trim();
-        const deviceId = getDeviceId();
+  // ════════════════════════════════════
+  //  LOGIN — مکمل ٹھیک شدہ
+  // ════════════════════════════════════
+  async function doLogin() {
+    const num      = document.getElementById("l-num").value.trim();
+    const pass     = document.getElementById("l-pass").value.trim();
+    const deviceId = getDeviceId();
 
-        if(!num || !pass) return Swal.fire("Error", "Please enter your phone and password", "error");
+    if (!num || !pass) return Swal.fire("Error", "Phone اور Password ضروری ہیں", "error");
 
-        Swal.fire({ title: 'Verifying...', didOpen: () => Swal.showLoading() });
+    Swal.fire({ title: 'Verifying...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
 
-        try {
-            let res = await fetch(`${GAS_URL}?type=login&num=${num}&pass=${pass}&deviceId=${deviceId}`);
-            let out = await res.json();
-            if(out.status === "success") {
-                localStorage.setItem("psID", out.user.user_id);
-                localStorage.setItem("psUser", JSON.stringify(out.user));
-                window.location.href = "dashboard.html";
-            } else {
-                Swal.fire("Access Denied", out.message, "error");
-            }
-        } catch(e) { 
-            Swal.fire("Server Error", "Authentication service is currently unavailable.", "error"); 
-        }
+    try {
+      const res = await fetch(`${GAS_URL}?type=login&num=${encodeURIComponent(num)}&pass=${encodeURIComponent(pass)}&deviceId=${encodeURIComponent(deviceId)}`);
+      const out = await res.json();
+
+      if (out.status === "success") {
+        // ✅ تینوں keys save کریں
+        localStorage.setItem("psLoggedIn", "true");
+        localStorage.setItem("psID",       out.user.user_id);
+        localStorage.setItem("psUser",     JSON.stringify(out.user));
+
+        Swal.fire({
+          title: "Login Successful!",
+          text : "Welcome " + (out.user.name || "") + "!",
+          icon : "success",
+          timer: 1500,
+          showConfirmButton: false
+        });
+
+        // ✅ 1.6 سیکنڈ بعد dashboard — replace() تاکہ back button index پر نہ لے جائے
+        setTimeout(() => { window.location.replace("dashboard.html"); }, 1600);
+
+      } else {
+        Swal.fire("Access Denied", out.message || "Login failed", "error");
+      }
+    } catch (e) {
+      Swal.fire("Server Error", "Connection failed. Try again.", "error");
     }
+  }
+
+  // ════════════════════════════════════
+  //  REGISTER
+  // ════════════════════════════════════
+  async function doRegister() {
+    const name     = document.getElementById("r-name").value.trim();
+    const num      = document.getElementById("r-num").value.trim();
+    const pass     = document.getElementById("r-pass").value.trim();
+    const ref      = document.getElementById("r-ref").value.trim() || "DIRECT";
+    const deviceId = getDeviceId();
+
+    if (!name || !num || !pass) return Swal.fire("Error", "تمام fields بھریں", "error");
+    if (!document.getElementById("terms-chk").checked)
+      return Swal.fire("Error", "Terms & Conditions agree کریں", "error");
+
+    Swal.fire({ title: 'Processing...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+
+    try {
+      const res = await fetch(GAS_URL, {
+        method : "POST",
+        headers: { "Content-Type": "application/json" },
+        body   : JSON.stringify({ type: "register", name, number: num, password: pass, referral: ref, device_id: deviceId })
+      });
+      const out = await res.json();
+
+      if (out.status === "success") {
+        localStorage.setItem("psLoggedIn", "true");
+        localStorage.setItem("psID",       out.user_id);
+        localStorage.setItem("psUser",     JSON.stringify({ user_id: out.user_id, name, number: num }));
+
+        Swal.fire({
+          title: "Registration Successful!",
+          text : "Your ID: " + out.user_id,
+          icon : "success",
+          timer: 2000,
+          showConfirmButton: false
+        });
+
+        setTimeout(() => { window.location.replace("dashboard.html"); }, 2000);
+      } else {
+        Swal.fire("Failed", out.message || "Registration failed", "error");
+      }
+    } catch (e) {
+      Swal.fire("Network Error", "Unable to connect. Try again.", "error");
+    }
+  }
 </script>
 </body>
 </html>
