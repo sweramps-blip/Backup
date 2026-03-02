@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>My Team | Power Star</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+:root {
+  --bg     : #0a0e1a;
+  --card   : #131829;
+  --border : #1e2a45;
+  --gold   : #fbbf24;
+  --gold2  : #f59e0b;
+  --sub    : #64748b;
+  --dim    : #3d4f6e;
+  --green  : #22c55e;
+  --red    : #ef4444;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { min-height: 100%; font-family: 'Outfit', sans-serif; background: var(--bg); color: #fff; -webkit-font-smoothing: antialiased; overflow-x: hidden; }
+body::before {
+  content: ''; position: fixed; top: -40%; left: 50%; transform: translateX(-50%);
+  width: 600px; height: 600px;
+  background: radial-gradient(circle, rgba(251,191,36,0.10) 0%, transparent 70%);
+  pointer-events: none; z-index: 0;
+}
+
+/* TOP BAR */
+.topbar {
+  position: sticky; top: 0; z-index: 100;
+  background: rgba(10,14,26,0.93); backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; padding: 14px 18px; gap: 14px;
+}
+.back-btn {
+  width: 38px; height: 38px; background: var(--card);
+  border: 1px solid var(--border); border-radius: 12px;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; text-decoration: none; color: #fff; font-size: 15px; transition: 0.2s;
+}
+.back-btn:active { transform: scale(0.93); }
+.topbar-title { font-size: 18px; font-weight: 700; flex: 1; }
+.refresh-btn {
+  width: 38px; height: 38px; background: var(--card);
+  border: 1px solid var(--border); border-radius: 12px;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; color: var(--gold); font-size: 15px;
+}
+.refresh-btn.spinning i { animation: spin 0.7s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* REFERRAL CARD */
+.ref-card {
+  margin: 18px 16px 0;
+  background: linear-gradient(135deg, #1a1f35, #0f1423);
+  border: 1px solid var(--border); border-radius: 20px;
+  padding: 20px; position: relative; overflow: hidden;
+}
+.ref-card::before {
+  content: ''; position: absolute; top: -30px; right: -30px;
+  width: 130px; height: 130px;
+  background: radial-gradient(circle, rgba(251,191,36,0.15) 0%, transparent 70%);
+  pointer-events: none;
+}
+.ref-label { font-size: 11px; color: var(--sub); font-weight: 600; text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 6px; }
+.ref-id-row { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
+.ref-id {
+  font-size: 24px; font-weight: 800;
+  background: linear-gradient(135deg, var(--gold), var(--gold2));
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+}
+.copy-btn {
+  background: rgba(251,191,36,0.15); border: 1px solid rgba(251,191,36,0.3);
+  color: var(--gold); border-radius: 10px; padding: 6px 14px;
+  font-size: 12px; font-weight: 600; cursor: pointer; transition: 0.2s;
+}
+.copy-btn:active { transform: scale(0.95); }
+.ref-link-box {
+  background: #0a0e1a; border: 1px solid var(--border);
+  border-radius: 12px; padding: 10px 14px;
+  display: flex; align-items: center; gap: 8px;
+}
+.ref-link-box span {
+  flex: 1; font-size: 12px; color: var(--sub);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.link-copy { background: none; border: none; color: var(--gold); font-size: 14px; cursor: pointer; }
+
+/* STATS */
+.stats-row { display: flex; gap: 12px; margin: 14px 16px 0; }
+.stat-box {
+  flex: 1; background: var(--card); border: 1px solid var(--border);
+  border-radius: 16px; padding: 16px 12px; text-align: center;
+}
+.stat-num  { font-size: 26px; font-weight: 800; color: var(--gold); }
+.stat-lbl  { font-size: 11px; color: var(--sub); margin-top: 3px; font-weight: 600; }
+
+/* SECTION TITLE */
+.sec-title {
+  font-size: 12px; font-weight: 700; color: var(--sub);
+  text-transform: uppercase; letter-spacing: 0.9px; margin: 22px 16px 12px;
+}
+
+/* MEMBER LIST */
+.member-list { padding: 0 16px; display: flex; flex-direction: column; gap: 10px; }
+
+.member-card {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 16px; padding: 14px 16px;
+  display: flex; align-items: center; gap: 14px;
+  animation: fadeUp 0.35s ease both;
+}
+@keyframes fadeUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+
+.avatar {
+  width: 46px; height: 46px; border-radius: 14px;
+  background: linear-gradient(135deg, var(--gold), var(--gold2));
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px; font-weight: 800; color: #0a0e1a; flex-shrink: 0;
+}
+.member-info   { flex: 1; min-width: 0; }
+.member-name   { font-size: 15px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.member-id     { font-size: 12px; color: var(--sub); margin-top: 2px; }
+.member-date   { font-size: 11px; color: var(--dim); margin-top: 2px; }
+.status-badge  { font-size: 11px; font-weight: 700; padding: 5px 11px; border-radius: 20px; flex-shrink: 0; }
+.s-active      { background: rgba(34,197,94,0.15); color: var(--green); }
+.s-inactive    { background: rgba(239,68,68,0.15);  color: var(--red); }
+
+/* SKELETON */
+.skeleton-list { padding: 0 16px; display: flex; flex-direction: column; gap: 10px; }
+.skeleton-card {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 16px; padding: 14px 16px; display: flex; align-items: center; gap: 14px;
+}
+.sk { background: #1e2a45; border-radius: 8px; animation: pulse 1.4s ease-in-out infinite; }
+@keyframes pulse { 0%,100%{ opacity:1; } 50%{ opacity:0.35; } }
+.sk-av  { width:46px; height:46px; border-radius:14px; flex-shrink:0; }
+.sk-col { flex:1; display:flex; flex-direction:column; gap:8px; }
+.sk-l1  { height:14px; width:55%; }
+.sk-l2  { height:11px; width:38%; }
+
+/* EMPTY */
+.empty-state { display:none; text-align:center; padding:50px 20px; }
+.empty-icon  { font-size:56px; margin-bottom:16px; }
+.empty-state h3 { font-size:18px; font-weight:700; margin-bottom:8px; }
+.empty-state p  { font-size:13px; color:var(--sub); line-height:1.6; }
+
+.bottom-pad { height: 36px; }
+</style>
+</head>
+<body>
+
+<!-- ✅ AUTH GUARD -->
+<script>
+(function() {
+  if (localStorage.getItem("psLoggedIn") !== "true" || !localStorage.getItem("psID")) {
+    window.location.replace("index.html"); return;
+  }
+  try { window.CU = JSON.parse(localStorage.getItem("psUser") || "{}"); }
+  catch(e) { localStorage.clear(); window.location.replace("index.html"); }
+})();
+</script>
+
+<!-- TOP BAR -->
+<div class="topbar">
+  <a href="dashboard.html" class="back-btn"><i class="fas fa-arrow-left"></i></a>
+  <span class="topbar-title">⚡ My Team</span>
+  <div class="refresh-btn" id="refreshBtn" onclick="loadTeam()">
+    <i class="fas fa-rotate-right"></i>
+  </div>
+</div>
+
+<!-- REFERRAL CARD -->
+<div class="ref-card">
+  <div class="ref-label">Your Referral Code</div>
+  <div class="ref-id-row">
+    <div class="ref-id" id="myRefCode">—</div>
+    <button class="copy-btn" onclick="copyCode()"><i class="fas fa-copy"></i> Copy</button>
+  </div>
+  <div class="ref-link-box">
+    <span id="refLinkText">Loading...</span>
+    <button class="link-copy" onclick="copyLink()" title="Copy link"><i class="fas fa-link"></i></button>
+  </div>
+</div>
+
+<!-- STATS -->
+<div class="stats-row">
+  <div class="stat-box">
+    <div class="stat-num" id="totalCount">—</div>
+    <div class="stat-lbl">Total</div>
+  </div>
+  <div class="stat-box">
+    <div class="stat-num" id="activeCount" style="color:var(--green)">—</div>
+    <div class="stat-lbl">Active</div>
+  </div>
+  <div class="stat-box">
+    <div class="stat-num" id="inactiveCount" style="color:var(--red)">—</div>
+    <div class="stat-lbl">Inactive</div>
+  </div>
+</div>
+
+<!-- LIST TITLE -->
+<div class="sec-title">Team Members</div>
+
+<!-- SKELETONS -->
+<div class="skeleton-list" id="skelArea">
+  <div class="skeleton-card"><div class="sk sk-av"></div><div class="sk-col"><div class="sk sk-l1"></div><div class="sk sk-l2"></div></div></div>
+  <div class="skeleton-card"><div class="sk sk-av"></div><div class="sk-col"><div class="sk sk-l1"></div><div class="sk sk-l2"></div></div></div>
+  <div class="skeleton-card"><div class="sk sk-av"></div><div class="sk-col"><div class="sk sk-l1"></div><div class="sk sk-l2"></div></div></div>
+</div>
+
+<!-- MEMBERS -->
+<div class="member-list" id="memberList"></div>
+
+<!-- EMPTY -->
+<div class="empty-state" id="emptyState">
+  <div class="empty-icon">👥</div>
+  <h3>No Team Members Yet</h3>
+  <p>Share your referral code<br>and start building your team!</p>
+</div>
+
+<div class="bottom-pad"></div>
+
+<script>
+  const GAS_URL  = "https://script.google.com/macros/s/AKfycbzUtZtwaUZ_LgSpmQdbzrukqB-TvphKDsp1uQqzD1wsHgTF5KGJ92wZgXhP1iYEc5lH1g/exec";
+  const userId   = window.CU.user_id || "";
+  const pageBase = window.location.href.replace(/[^/]*$/, "");
+  const refLink  = pageBase + "index.html?ref=" + userId;
+
+  // Set referral info
+  document.getElementById("myRefCode").textContent  = userId;
+  document.getElementById("refLinkText").textContent = refLink;
+
+  // Copy code
+  function copyCode() {
+    navigator.clipboard.writeText(userId).then(() =>
+      Swal.fire({ icon:"success", title:"Copied!", text:"Referral code copied.", timer:1200, showConfirmButton:false })
+    );
+  }
+
+  // Copy link
+  function copyLink() {
+    navigator.clipboard.writeText(refLink).then(() =>
+      Swal.fire({ icon:"success", title:"Link Copied!", text:"Share with friends to earn!", timer:1200, showConfirmButton:false })
+    );
+  }
+
+  // Load team from Firebase via GAS
+  async function loadTeam() {
+    const btn = document.getElementById("refreshBtn");
+    btn.classList.add("spinning");
+    document.getElementById("skelArea").style.display    = "flex";
+    document.getElementById("memberList").innerHTML      = "";
+    document.getElementById("emptyState").style.display = "none";
+    document.getElementById("totalCount").textContent    = "—";
+    document.getElementById("activeCount").textContent   = "—";
+    document.getElementById("inactiveCount").textContent = "—";
+
+    try {
+      const res  = await fetch(`${GAS_URL}?type=get_team&userId=${encodeURIComponent(userId)}`);
+      const data = await res.json();
+
+      document.getElementById("skelArea").style.display = "none";
+      btn.classList.remove("spinning");
+
+      if (data.status !== "success") {
+        Swal.fire("Error", data.message || "Could not load team.", "error");
+        return;
+      }
+
+      const team     = data.team || [];
+      const active   = team.filter(m => (m.status || "active") === "active").length;
+      const inactive = team.length - active;
+
+      document.getElementById("totalCount").textContent    = team.length;
+      document.getElementById("activeCount").textContent   = active;
+      document.getElementById("inactiveCount").textContent = inactive;
+
+      if (team.length === 0) {
+        document.getElementById("emptyState").style.display = "block";
+        return;
+      }
+
+      const list = document.getElementById("memberList");
+      team.forEach((m, i) => {
+        const initial  = (m.name || "?").charAt(0).toUpperCase();
+        const isActive = (m.status || "active") === "active";
+        const joined   = m.joined_at ? _fmtDate(m.joined_at) : "—";
+
+        const card = document.createElement("div");
+        card.className = "member-card";
+        card.style.animationDelay = (i * 0.055) + "s";
+        card.innerHTML = `
+          <div class="avatar">${initial}</div>
+          <div class="member-info">
+            <div class="member-name">${_esc(m.name || "Unknown")}</div>
+            <div class="member-id">${_esc(m.user_id || "")}</div>
+            <div class="member-date"><i class="fas fa-calendar-alt" style="font-size:10px;margin-right:3px;"></i>${joined}</div>
+          </div>
+          <span class="status-badge ${isActive ? 's-active' : 's-inactive'}">
+            ${isActive ? '● Active' : '● Inactive'}
+          </span>`;
+        list.appendChild(card);
+      });
+
+    } catch(err) {
+      document.getElementById("skelArea").style.display = "none";
+      btn.classList.remove("spinning");
+      Swal.fire("Error", "Connection failed. Check internet.", "error");
+    }
+  }
+
+  function _fmtDate(iso) {
+    try {
+      return new Date(iso).toLocaleDateString("en-PK", { day:"2-digit", month:"short", year:"numeric" });
+    } catch(e) { return "—"; }
+  }
+
+  function _esc(s) {
+    return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+  }
+
+  window.addEventListener("load", loadTeam);
+</script>
+</body>
+</html>
