@@ -1,4 +1,4 @@
-ye<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -84,7 +84,7 @@ body::before { content: ''; position: fixed; top: -40%; left: 50%; transform: tr
 </div>
 
 <script>
-  const GAS_URL = "https://script.google.com/macros/s/AKfycbxZwxf4cHgNdlMRSqTZxBd6GngrukYe3G8692XBC--3ul7BAA93KKK7-9GRyPLt9kUSTQ/exec";
+  const GAS_URL = "https://script.google.com/macros/s/AKfycbzgrFxwSw1BFQWwMmWPWKaeNH7UxkCYhHpWRe8HQ7fEmYtFPdMSwEizgWGfnSr8_SCqPg/exec";
 
   window.onload = () => {
     // ✅ اگر پہلے سے لاگ ان ہے تو سیدھا dashboard بھیجو
@@ -166,6 +166,7 @@ body::before { content: ''; position: fixed; top: -40%; left: 50%; transform: tr
         localStorage.setItem("psLoggedIn", "true");
         localStorage.setItem("psID",       out.user.user_id);
         localStorage.setItem("psUser",     JSON.stringify(out.user));
+        localStorage.setItem("ps_user",    JSON.stringify(out.user));
 
         Swal.fire({
           title: "Login Successful!",
