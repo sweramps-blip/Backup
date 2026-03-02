@@ -135,99 +135,67 @@
     </div>
 
 <script>
-// ✅ آپ کا پرانا API_URL — بالکل نہیں بدلا
 const API_URL = "https://script.google.com/macros/s/AKfycbzUtZtwaUZ_LgSpmQdbzrukqB-TvphKDsp1uQqzD1wsHgTF5KGJ92wZgXhP1iYEc5lH1g/exec";
 
-// ✅ آپ کا پرانا syncDashboard — بالکل نہیں بدلا
 async function syncDashboard() {
-    // ✅ ps_user OR psUser — دونوں میں سے جو ملے
-    const localUser = JSON.parse(localStorage.getItem("ps_user") || localStorage.getItem("psUser"));
+    const localUser = JSON.parse(localStorage.getItem("psUser") || localStorage.getItem("ps_user") || "null");
     if (!localUser) { window.location.replace("index.html"); return; }
-    
-    document.getElementById("u-name").innerText = localUser.name || "User";
+
+    // فوری local data دکھاؤ — loading spinner نہ رہے
+    document.getElementById("u-name").innerText = localUser.name    || "User";
+    document.getElementById("u-id").innerText   = localUser.user_id || "PS####";
+    document.getElementById("u-bal").innerText  = parseFloat(localUser.balance || 0).toFixed(2);
 
     try {
-        const res = await fetch(API_URL);
+        // ✅ get_user — صرف userId سے data لو، password کی ضرورت نہیں
+        const res = await fetch(
+            API_URL + "?type=get_user&userId=" + encodeURIComponent(localUser.user_id || "")
+        );
         const data = await res.json();
-        
-        if (data.users) {
-            const dbUser = data.users.find(u => String(u.number) === String(localUser.number));
-            if(dbUser) {
-                document.getElementById("u-bal").innerText = parseFloat(dbUser.balance).toFixed(2);
-                document.getElementById("u-id").innerText = dbUser.user_id;
-                document.getElementById("u-name").innerText = dbUser.name;
-                // ✅ دونوں keys update کریں
-                localStorage.setItem("ps_user", JSON.stringify(dbUser));
-                localStorage.setItem("psUser",  JSON.stringify(dbUser));
-            }
-        }
 
-        if (data.settings && data.settings.news) {
-            const newsMarquee = document.getElementById("news-text");
-            if(newsMarquee) newsMarquee.innerHTML = data.settings.news;
+        if (data.status === "success" && data.user) {
+            const u = data.user;
+            document.getElementById("u-bal").innerText  = parseFloat(u.balance || 0).toFixed(2);
+            document.getElementById("u-id").innerText   = u.user_id || localUser.user_id;
+            document.getElementById("u-name").innerText = u.name    || localUser.name;
+
+            // ✅ سب keys update کرو تاکہ team page بھی صحیح کام کرے
+            const merged = Object.assign({}, localUser, u);
+            localStorage.setItem("psUser",  JSON.stringify(merged));
+            localStorage.setItem("ps_user", JSON.stringify(merged));
+            localStorage.setItem("psID",    merged.user_id);
         }
 
         const mediaBox = document.getElementById("media-content");
         if (mediaBox && data.settings && data.settings.media_link) {
             const type = data.settings.media_type;
             const link = data.settings.media_link;
-
             if (type === "video") {
-                let finalLink = link;
-                
-                if (link.includes("dropbox.com")) {
-                    finalLink = link.replace("dl=0", "raw=1");
-                } 
+                let fl = link;
+                if (link.includes("dropbox.com")) fl = link.replace("dl=0","raw=1");
                 else if (link.includes("drive.google.com")) {
-                    let fileId = "";
-                    if (link.includes("/d/")) {
-                        fileId = link.split("/d/")[1].split("/")[0];
-                    } else if (link.includes("id=")) {
-                        fileId = link.split("id=")[1].split("&")[0];
-                    }
-                    finalLink = fileId ? `https://drive.google.com/uc?export=download&id=${fileId}` : link;
+                    let id = link.includes("/d/") ? link.split("/d/")[1].split("/")[0]
+                           : link.includes("id=") ? link.split("id=")[1].split("&")[0] : "";
+                    if (id) fl = "https://drive.google.com/uc?export=download&id=" + id;
                 }
-                
-                mediaBox.innerHTML = `
-                    <video autoplay muted loop playsinline webkit-playsinline 
-                           style="width:100%; height:100%; object-fit:fill; border-radius:16px; pointer-events:none;"
-                           onerror="this.parentElement.innerHTML='<p style=color:red;font-size:10px;>Video Error</p>'">
-                        <source src="${finalLink}" type="video/mp4">
-                    </video>`;
+                mediaBox.innerHTML = '<video autoplay muted loop playsinline style="width:100%;height:100%;object-fit:fill;border-radius:16px;pointer-events:none;"><source src="' + fl + '" type="video/mp4"></video>';
             } else {
-                mediaBox.innerHTML = `<img src="${link}" style="width:100%; height:100%; object-fit:cover; border-radius:16px;">`;
+                mediaBox.innerHTML = '<img src="' + link + '" style="width:100%;height:100%;object-fit:cover;border-radius:16px;">';
             }
         }
+        if (data.settings && data.settings.news) {
+            const nm = document.getElementById("news-text");
+            if (nm) nm.innerHTML = data.settings.news;
+        }
     } catch (e) {
-        console.log("Sync Error: ", e);
+        console.log("Sync Error:", e);
     }
 }
 
-// ✅ آپ کا پرانا openHistory — بالکل نہیں بدلا
 async function openHistory() {
     document.getElementById("history-modal").classList.add("show");
-    const localUser = JSON.parse(localStorage.getItem("ps_user") || localStorage.getItem("psUser"));
     const historyBody = document.getElementById("history-body");
-
-    try {
-        const res = await fetch(API_URL);
-        const data = await res.json();
-        const userHistory = data.withdrawals.filter(w => String(w.user_id) === String(localUser.user_id));
-
-        let html = '';
-        userHistory.reverse().forEach(item => {
-            let displayTitle = "Withdrawal (" + item.status + ")";
-            html += `
-                <div class="history-item">
-                    <div class="history-item-left">
-                        <div class="history-type">${displayTitle}</div>
-                        <div class="history-date">${new Date(item.date).toLocaleDateString()}</div>
-                    </div>
-                    <div class="history-amount">Rs. ${parseFloat(item.amount).toFixed(2)}</div>
-                </div>`;
-        });
-        historyBody.innerHTML = html || '<p style="text-align:center; padding:20px;">No history.</p>';
-    } catch (e) { historyBody.innerHTML = '<p>Error loading...</p>'; }
+    historyBody.innerHTML = '<p style="text-align:center;padding:30px;color:#64748b;">No transaction history yet.</p>';
 }
 
 // ✅ آپ کا پرانا closeHistory — بالکل نہیں بدلا
