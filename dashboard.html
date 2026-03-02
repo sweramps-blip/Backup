@@ -34,7 +34,7 @@
         // اب چیک کرو — دونوں میں سے کوئی بھی ہو تو ٹھیک ہے
         var userData = oldKey || newKey;
         if (!userData) {
-            window.location.replace("index.html");
+            window.location.replace("auth.html");
         }
     })();
     </script>
@@ -135,11 +135,11 @@
     </div>
 
 <script>
-const API_URL = "https://script.google.com/macros/s/AKfycbxZwxf4cHgNdlMRSqTZxBd6GngrukYe3G8692XBC--3ul7BAA93KKK7-9GRyPLt9kUSTQ/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycbzgrFxwSw1BFQWwMmWPWKaeNH7UxkCYhHpWRe8HQ7fEmYtFPdMSwEizgWGfnSr8_SCqPg/exec";
 
 async function syncDashboard() {
     const localUser = JSON.parse(localStorage.getItem("psUser") || localStorage.getItem("ps_user") || "null");
-    if (!localUser) { window.location.replace("index.html"); return; }
+    if (!localUser) { window.location.replace("auth.html"); return; }
 
     // فوری local data دکھاؤ — loading spinner نہ رہے
     document.getElementById("u-name").innerText = localUser.name    || "User";
@@ -221,7 +221,7 @@ function logout() {
     localStorage.removeItem("psUser");
     localStorage.removeItem("psLoggedIn");
     localStorage.removeItem("psID");
-    window.location.replace("index.html");
+    window.location.replace("auth.html");
 }
 
 // ✅ آپ کا پرانا copyID — بالکل نہیں بدلا
