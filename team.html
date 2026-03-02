@@ -157,10 +157,10 @@ body::before {
 <script>
 (function() {
   if (localStorage.getItem("psLoggedIn") !== "true" || !localStorage.getItem("psID")) {
-    window.location.replace("index.html"); return;
+    window.location.replace("auth.html"); return;
   }
   try { window.CU = JSON.parse(localStorage.getItem("psUser") || "{}"); }
-  catch(e) { localStorage.clear(); window.location.replace("index.html"); }
+  catch(e) { localStorage.clear(); window.location.replace("auth.html"); }
 })();
 </script>
 
@@ -225,10 +225,10 @@ body::before {
 <div class="bottom-pad"></div>
 
 <script>
-  const GAS_URL  = "https://script.google.com/macros/s/AKfycbxZwxf4cHgNdlMRSqTZxBd6GngrukYe3G8692XBC--3ul7BAA93KKK7-9GRyPLt9kUSTQ/exec";
+  const GAS_URL  = "https://script.google.com/macros/s/AKfycbzgrFxwSw1BFQWwMmWPWKaeNH7UxkCYhHpWRe8HQ7fEmYtFPdMSwEizgWGfnSr8_SCqPg/exec";
   const userId   = window.CU.user_id || "";
   const pageBase = window.location.href.replace(/[^/]*$/, "");
-  const refLink  = pageBase + "index.html?ref=" + userId;
+  const refLink  = pageBase + "auth.html?ref=" + userId;
 
   // Set referral info
   document.getElementById("myRefCode").textContent  = userId;
